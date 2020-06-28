@@ -1,7 +1,6 @@
-import Piece from "./Piece.js";
+// jshint esversion: 8
 
 /**
- * jshint esversion: 8
  *
  * @author Andrew Gray <contact@andrewgray.dev>
  * @version 1.0
@@ -11,6 +10,7 @@ import Piece from "./Piece.js";
  * @param {object} - The html canvas object
  * @param {number} - The number of players for the current game
  */
+import Piece from "./Piece.js";
 class Board {
   constructor(canvas, nPlayers) {
     if (!canvas || !nPlayers) return;
@@ -80,22 +80,10 @@ class Board {
       turnOrder: [],
       posOrder: ["red", "yellow", "blue", "green", "black", "white"],
     };
-    const defualtTurnOrder = [
-      "red",
-      "yellow",
-      "blue",
-      "green",
-      "black",
-      "white",
-    ];
-    this.gameState.currentPlayerID = defualtTurnOrder[0];
-    this.gameState.turnOrder = defualtTurnOrder;
 
     await this.drawBoard();
-    this.gameState.posOrder.forEach((player) => this.initPlayer(player));
-    this.initGameEvents();
-    let displayCurrentPlayer = document.querySelector(".playerTurn");
-    displayCurrentPlayer.innerHTML = this.gameState.currentPlayerID;
+    await this.initPlayers(nPlayers);
+    await this.initGameEvents();
   }
   /**
    * The drawBoard() method draws each individual playable node points accross a x/y axis.
@@ -125,7 +113,7 @@ class Board {
       1,
     ];
 
-    this.drawPlayerBases();
+    await this.drawPlayerBases();
     playableAreaPos.forEach((nNodes, ny) => {
       this.calcXYpos(nNodes, ny, (x, y, _x, _y) => {
         let id = this.getNodeID(_x, _y);
@@ -190,41 +178,49 @@ class Board {
 
     if (piece) this.setSelected(piece);
   }
-  //Initialises player pieces on the board
   /**
    * This method initialises the starting positions of each player pieces on the game board, this method is called after the board has been drawn
-   * @param {String} playerID -The player ID
+   * @param {number} nPlayers -The number of players who will play the game
    */
-  async initPlayer(playerID) {
-    const player = this.config.players[playerID];
-    let playerAreaPos;
-
-    if (player.pos % 2 !== 0) playerAreaPos = [1, 2, 3, 4];
-    else playerAreaPos = [4, 3, 2, 1];
-
-    playerAreaPos.forEach((nn, y) => {
-      if (player.pos === 1 || player.pos === 4)
-        this.calcPlayerXYpos(nn, y + player.area.y, 0 + 1, (x, y, _x, _y) => {
-          let id = this.getNodeID(_x, _y);
-          let pId = playerID;
-          this.playablePos[id].player = player;
-          new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
-        });
-      else if (player.pos === 5 || player.pos === 6)
-        this.calcPlayerXYpos(nn, y + player.area.y, 0, (x, y, _x, _y) => {
-          let id = this.getNodeID(_x, _y);
-          let pId = playerID;
-          this.playablePos[id].player = player;
-          new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
-        });
-      // else if (player.pos === 2)
-      else if (player.pos === 2 || player.pos === 3)
-        this.calcPlayerXYpos(nn, y + player.area.y, 2, (x, y, _x, _y) => {
-          let id = this.getNodeID(_x, _y);
-          let pId = playerID;
-          this.playablePos[id].player = player;
-          new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
-        });
+  async initPlayers(nPlayers) {
+    let playOrder = [];
+    if (nPlayers === 2) playOrder = [1, 4];
+    else if (nPlayers === 3) playOrder = [6, 2, 4];
+    else if (nPlayers === 4) playOrder = [6, 2, 3, 5];
+    else if (nPlayers === 6) playOrder = [1, 2, 3, 4, 5, 6];
+    else return;
+    let nNodes = []; // Number of nodes on the x-axis where the position in the array represents a y-axis position that will be calculated.
+    playOrder.forEach((pos, index) => {
+      const playerID = this.gameState.posOrder[pos - 1];
+      const player = this.config.players[playerID];
+      if (index === 0) this.gameState.currentPlayerID = playerID; //sets the current player ID
+      this.gameState.turnOrder.push(playerID); // sets the game turn order
+      //Checks the players position to determine if the triangle area where the player pieces are, is rightsideup or upsidedown
+      if (player.pos % 2 !== 0) nNodes = [1, 2, 3, 4];
+      else nNodes = [4, 3, 2, 1];
+      nNodes.forEach((nx, y) => {
+        if (player.pos === 1 || player.pos === 4) {
+          this.calcPlayerXYpos(nx, y + player.area.y, 1, (x, y, _x, _y) => {
+            let id = this.getNodeID(_x, _y);
+            let pId = playerID;
+            this.playablePos[id].player = player;
+            new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
+          });
+        } else if (player.pos === 5 || player.pos === 6)
+          this.calcPlayerXYpos(nx, y + player.area.y, 0, (x, y, _x, _y) => {
+            let id = this.getNodeID(_x, _y);
+            let pId = playerID;
+            this.playablePos[id].player = player;
+            new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
+          });
+        else if (player.pos === 2 || player.pos === 3)
+          this.calcPlayerXYpos(nx, y + player.area.y, 2, (x, y, _x, _y) => {
+            let id = this.getNodeID(_x, _y);
+            let pId = playerID;
+            this.playablePos[id].player = player;
+            new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
+          });
+      });
     });
   }
   /**
@@ -232,17 +228,6 @@ class Board {
    */
   async initGameEvents() {
     let onBoardClick = this.onBoardClick.bind(this);
-    let cancelBtn = document.querySelector("#cancel");
-    let endTurnBtn = document.querySelector("#endTurn");
-    cancelBtn.addEventListener("click", () => {
-      if (!this.gameState.currentPlayerMoved) this.clearSelectedPiece();
-    });
-    // Resets the history and player move tracker
-    endTurnBtn.addEventListener("click", () => {
-      this.history = [];
-      this.gameState.currentPlayerMoved = false;
-      this.nextPlayer();
-    });
     this.canvas.addEventListener("click", onBoardClick, false);
   }
   /**
@@ -252,16 +237,35 @@ class Board {
   onBoardClick(event) {
     const currentPlayer = this.gameState.currentPlayerID;
     const pos = { x: event.offsetX, y: event.offsetY };
-    const piece = this.isPlayable(pos); //checks if the location clicked is a playable position
-    const moveTo = this.gameState.selectedPiece;
+    const selectedPos = this.isPlayable(pos); //checks if the location clicked is a playable position
+    const playerMoved = this.gameState.currentPlayerMoved;
+    const selectedPiece = this.gameState.selectedPiece;
 
-    if (!moveTo && piece?.player?.id === currentPlayer) {
-      this.setSelected(piece);
-    } else if (moveTo && !piece?.player) {
-      this.move(piece, moveTo);
+    if (selectedPos) {
+      if (selectedPos.player) {
+        if (selectedPos.player.id === currentPlayer && !playerMoved) {
+          this.setSelected(selectedPos);
+        }
+      } else if (selectedPiece) {
+        this.move(selectedPiece, selectedPos);
+      }
     }
-  }
 
+    // if (!moveTo && piece.player.id === currentPlayer) {
+    //   this.setSelected(piece);
+    // } else if (moveTo && !piece.player) {
+    //   this.move(piece, moveTo);
+    // }
+  }
+  undoMove() {}
+  endTurn() {
+    return new Promise((resolve, reject) => {
+      this.history = [];
+      this.gameState.currentPlayerMoved = false;
+      this.nextPlayer();
+      resolve(this.gameState.currentPlayerID);
+    });
+  }
   /**
    * Checks if clicked area is the current player piece, empty gameboard area or another players piece. If it's an area outside the board playable area it returns null.
    * @param {object} - the pos object contains the x and y position of the area a user clicked
@@ -281,7 +285,8 @@ class Board {
    * Sets the clicked player piece to an active state by drawing a stroke around it.
    * @param {Piece} piece - The player's currently selected  game piece
    */
-  setSelected(piece) {
+  async setSelected(piece) {
+    await this.clearSelectedPiece();
     this.gameState.selectedPiece = piece;
     this.drawStroke(piece.x, piece.y);
   }
@@ -290,23 +295,27 @@ class Board {
    * @param {object} moveTo - The players selected area to move selected piece.
    * @param {object} moveFrom -  The players currently selected game piece area.
    */
-  move(moveTo, moveFrom) {
+  move(moveFrom, moveTo) {
     if (!moveTo) return;
     let xMoveBy = Math.abs(moveTo._x - moveFrom._x);
     let yMoveBy = Math.abs(moveTo._y - moveFrom._y);
-
+    //chain move allowed
     if (this.gameState.currentPlayerMoved) {
       if (this.history[this.history.length - 1] === moveTo.id) return;
 
       let moveX = moveFrom._x + (moveTo._x - moveFrom._x) / 2;
       let moveY = moveFrom._y + (moveTo._y - moveFrom._y) / 2;
       let id = this.getNodeID(moveX, moveY);
+      console.log(["id", id]);
+      console.log([moveFrom.id, moveTo.id]);
+      if (!this.playablePos[id]) return;
+      if (this.playablePos[id].player) {
+        
 
-      if (this.playablePos[id]?.player) {
-        this.playablePos[moveTo.id].player = moveFrom.player;
-        this.history.push(moveFrom.id); // adds player previous location to history move history
-        delete this.playablePos[moveFrom.id].player; // removed the previous position
-        this.updateBoard(moveTo);
+        //   this.playablePos[moveTo.id].player = moveFrom.player;
+        //   this.history.push(moveFrom.id); // adds player previous location to history move history
+        //   delete this.playablePos[moveFrom.id].player; // removed the previous position
+        //   this.updateBoard(moveTo);
       }
       return;
     }
@@ -323,7 +332,7 @@ class Board {
       delete this.playablePos[moveFrom.id].player;
       this.updateBoard(moveTo);
     }
-    //chain moves allowed
+    //hop moves allowed
     else if (
       (xMoveBy === 2 && yMoveBy === 2) ||
       (xMoveBy === 4 && yMoveBy === 0)
@@ -332,7 +341,7 @@ class Board {
       let moveY = moveFrom._y + (moveTo._y - moveFrom._y) / 2;
       let id = this.getNodeID(moveX, moveY);
 
-      if (this.playablePos[id]?.player) {
+      if (this.playablePos[id].player) {
         this.playablePos[moveTo.id].player = moveFrom.player;
         this.history.push(moveFrom.id); // adds player previous location to history move history
         this.gameState.currentPlayerMoved = true; // the current player moved
@@ -344,7 +353,7 @@ class Board {
   /**
    * Clears the selected player piece when they click the cancel selection button and updates the game board
    */
-  clearSelectedPiece() {
+  async clearSelectedPiece() {
     const selectedPiece = this.gameState.selectedPiece;
     if (selectedPiece) this.gameState.selectedPiece = null;
     this.updateBoard();
@@ -360,17 +369,13 @@ class Board {
 
     if (turnOrder[nextPlayerIndex]) {
       this.gameState.currentPlayerID = turnOrder[nextPlayerIndex];
-      let displayCurrentPlayer = document.querySelector(".playerTurn");
-      displayCurrentPlayer.innerHTML = this.gameState.currentPlayerID;
     } else {
-      this.gameState.currentPlayerID = "red";
-      let displayCurrentPlayer = document.querySelector(".playerTurn");
-      displayCurrentPlayer.innerHTML = this.gameState.currentPlayerID;
+      this.gameState.currentPlayerID = this.gameState.turnOrder[0]; //"red"
     }
 
     this.clearSelectedPiece();
   }
-  undoMove() {}
+
   /**
    * Draws a circle with a fill color.
    * @param {number} x - x position
@@ -472,7 +477,7 @@ class Board {
    * where 0:left,  1:center , 2:right.
    * @param {number} nn - Number of nodes on the x axis
    * @param {number} ny - Where on on the y-axis the nodes a present
-   * @param {number} sp  - This param id deprecated.
+   * @param {number} sp  - where the nodes start 0 being at the begining of the y-axis, 1 at the enter and 2 and the end.
    * @param {number} callback - callback function to return the actual x, y coordinates on the board.
    */
   calcPlayerXYpos(nn, ny, sp, callback) {

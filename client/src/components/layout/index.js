@@ -1,42 +1,22 @@
-import React from "react"
-import PropTypes from "prop-types"
-import { useStaticQuery, graphql } from "gatsby"
-
-import "./css.module.scss"
+import React from "react";
+import css from "./css.module.scss";
 
 const Layout = ({ children }) => {
-  const data = useStaticQuery(graphql`
-    query SiteTitleQuery {
-      site {
-        siteMetadata {
-          title
-        }
-      }
-    }
-  `)
-
   return (
-    <>
-      <div
-        style={{
-          margin: `0 auto`,
-          maxWidth: 960,
-          padding: `0 1.0875rem 1.45rem`,
-        }}
-      >
-        <main>{children}</main>
-        <footer>
-          © {new Date().getFullYear()}, Built with
-          {` `}
-          <a href="https://www.gatsbyjs.org">Gatsby</a>
-        </footer>
-      </div>
-    </>
-  )
-}
+    <div className={css.container}>
+      <main>{children}</main>
+      <footer>
+        © {new Date().getFullYear()}, Built by
+        {` `}
+        <a href="https://andrewgray.dev" style={{textDecoration:"none"}}>
+          Andrew Gray with{" "}
+          <span role="img" aria-label="love">
+            ❤️
+          </span>{" "}
+        </a>
+      </footer>
+    </div>
+  );
+};
 
-Layout.propTypes = {
-  children: PropTypes.node.isRequired,
-}
-
-export default Layout
+export default Layout;

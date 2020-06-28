@@ -17,6 +17,6 @@ This project started as a personal challenge to create a online turn base strate
 
 > For more information please reference `package.json`
 
-- Gatsby (React Framework)
+- React
 - Node.js
 - Socket.io
