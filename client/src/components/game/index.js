@@ -13,6 +13,9 @@ const GameBoard = () => {
     document
       .querySelector(".endTurn")
       .addEventListener("click", () => board.endTurn());
+      document
+      .querySelector(".undo")
+      .addEventListener("click", () => board.undoMove());
   });
 
   return (

@@ -93,34 +93,16 @@ class Board {
      * The number of playable positions accross the x-axis where the y-axis is represented by the array index.
      * Ane xample of this would be that, at index 2(y-axis:2) there are 3 playable positions at x-axis:1, x-axis:2, x-axis:3.
      */
-    const playableAreaPos = [
-      1,
-      2,
-      3,
-      4,
-      13,
-      12,
-      11,
-      10,
-      9,
-      10,
-      11,
-      12,
-      13,
-      4,
-      3,
-      2,
-      1,
-    ];
-
     await this.drawPlayerBases();
-    playableAreaPos.forEach((nNodes, ny) => {
-      this.calcXYpos(nNodes, ny, (x, y, _x, _y) => {
-        let id = this.getNodeID(_x, _y);
-        this.playablePos[id] = { x: x, y: y, id: id, _x: _x, _y: _y };
-        this.drawCircle(x, y);
-      });
-    });
+    [1, 2, 3, 4, 13, 12, 11, 10, 9, 10, 11, 12, 13, 4, 3, 2, 1].forEach(
+      (nNodes, ny) => {
+        this.calcXYpos(nNodes, ny, (x, y, _x, _y) => {
+          let id = this.getNodeID(_x, _y);
+          this.playablePos[id] = { x: x, y: y, id: id, _x: _x, _y: _y };
+          this.drawCircle(x, y);
+        });
+      }
+    );
   }
   /**
    * The drawPlayerBases() method draws a triangle at each player starting points to represent the players home base.
@@ -250,14 +232,14 @@ class Board {
         this.move(selectedPiece, selectedPos);
       }
     }
-
-    // if (!moveTo && piece.player.id === currentPlayer) {
-    //   this.setSelected(piece);
-    // } else if (moveTo && !piece.player) {
-    //   this.move(piece, moveTo);
-    // }
   }
-  undoMove() {}
+  //Moves the current piece back to the previous position and re-renders board
+  undoMove() {
+    // const id = this.history.pop();
+    // const prevPos = this.playablePos[id];
+    // const selectedPiece = this.gameState.selectedPiece;
+    // this.move(selectedPiece, prevPos);
+  }
   endTurn() {
     return new Promise((resolve, reject) => {
       this.history = [];
@@ -299,24 +281,36 @@ class Board {
     if (!moveTo) return;
     let xMoveBy = Math.abs(moveTo._x - moveFrom._x);
     let yMoveBy = Math.abs(moveTo._y - moveFrom._y);
+
+    // console.log(`From X:${moveFrom._x}, Y:${moveFrom._y}`);
+    // console.log(`TO X:${moveTo._x}, Y:${moveTo._y}`);
+
     //chain move allowed
     if (this.gameState.currentPlayerMoved) {
-      if (this.history[this.history.length - 1] === moveTo.id) return;
-
+      //prevents use from moving backwards without triggering the undo action or going around in circles 😆
+      if (
+        this.history[this.history.length - 1] === moveTo.id ||
+        this.history[0] === moveTo.id
+      )
+        return;
       let moveX = moveFrom._x + (moveTo._x - moveFrom._x) / 2;
       let moveY = moveFrom._y + (moveTo._y - moveFrom._y) / 2;
       let id = this.getNodeID(moveX, moveY);
-      console.log(["id", id]);
-      console.log([moveFrom.id, moveTo.id]);
-      if (!this.playablePos[id]) return;
-      if (this.playablePos[id].player) {
-        
 
-        //   this.playablePos[moveTo.id].player = moveFrom.player;
-        //   this.history.push(moveFrom.id); // adds player previous location to history move history
-        //   delete this.playablePos[moveFrom.id].player; // removed the previous position
-        //   this.updateBoard(moveTo);
+      //Double move left/right acceptable
+      if (
+        (xMoveBy === 4 && yMoveBy === 0) ||
+        (xMoveBy === 2 && yMoveBy === 2)
+      ) {
+        if (!this.playablePos[id]) return;
+        if (this.playablePos[id].player) {
+          this.playablePos[moveTo.id].player = moveFrom.player;
+          this.history.push(moveFrom.id); // adds player previous location to history move history
+          delete this.playablePos[moveFrom.id].player; // removed the previous position
+          this.updateBoard(moveTo);
+        }
       }
+
       return;
     }
 
