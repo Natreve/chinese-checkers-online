@@ -1,0 +1,9 @@
+{
+  "name": "chinese-checkers",
+  "version": "1.0.0",
+  "description": "The classic chinese checkers strategy board game created using react, and multiplayer enabled using socket.io",
+  "main": "index.js",
+  "repository": "https://github.com/Natreve/chinese-checkers-online.git",
+  "author": "Andrew Gray <natreve.ag20@gmail.com>",
+  "license": "MIT"
+}
