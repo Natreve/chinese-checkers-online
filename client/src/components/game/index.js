@@ -14,7 +14,7 @@ class GameBoard extends React.Component {
   }
   componentDidMount() {
     const canvas = this.canvasRef.current;
-    const gameBoard = new Board(canvas, 2);
+    const gameBoard = new Board(canvas, 3);
     this.setState({
       currentPlayer: gameBoard?.gameState.currentPlayerID,
       gameBoard: gameBoard,
@@ -22,9 +22,8 @@ class GameBoard extends React.Component {
     //scale canvas based on window resize
   }
   endTurn() {
-    this.state.gameBoard.endTurn();
     this.setState({
-      currentPlayer: this.state.gameBoard.gameState.currentPlayerID,
+      currentPlayer: this.state.gameBoard.endTurn(),
     });
   }
   undoMove() {

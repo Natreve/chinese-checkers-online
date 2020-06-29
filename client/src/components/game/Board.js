@@ -87,12 +87,14 @@ class Board {
       currentPlayerMoved: false,
       turnOrder: [],
       posOrder: ["red", "yellow", "blue", "green", "black", "white"],
-      zones: [10, 10, 10, 10, 10, 10],// each index represents the player starting zone
+      zones: [0, 0, 0, 0, 0, 0], // each index represents the player starting zone and the number of pieces within
     };
 
-    this.drawBoard();
-    this.initPlayers(nPlayers);
-    this.initGameEvents();
+    this.drawPlayerBases(); //draw the game board player base triangle
+    this.drawBoard(); // draw the game board nodes
+    this.initPlayers(nPlayers); // initialises the player pieces
+    this.initHomeZones(); //initialises the game board player home zones
+    this.initGameEvents(); // initialise game event listener(s)
   }
   /**
    * The drawBoard() method draws each individual playable node points accross a x/y axis.
@@ -102,7 +104,7 @@ class Board {
      * The number of playable positions accross the x-axis where the y-axis is represented by the array index.
      * Ane xample of this would be that, at index 2(y-axis:2) there are 3 playable positions at x-axis:1, x-axis:2, x-axis:3.
      */
-    this.drawPlayerBases();
+
     [1, 2, 3, 4, 13, 12, 11, 10, 9, 10, 11, 12, 13, 4, 3, 2, 1].forEach(
       (nNodes, ny) => {
         this.calcXYpos(nNodes, ny, (x, y, _x, _y) => {
@@ -195,29 +197,69 @@ class Board {
           this.calcPlayerXYpos(nx, y + player.area.y, 1, (x, y, _x, _y) => {
             let id = this.getNodeID(_x, _y);
             let pId = playerID;
-
-            this.playablePos[id].zone = player.pos; //assign a zone number in order to set rules for winning an piece entry
             this.playablePos[id].player = player;
             new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
           });
-        } else if (player.pos === 5 || player.pos === 6)
+        } else if (player.pos === 5 || player.pos === 6) {
           this.calcPlayerXYpos(nx, y + player.area.y, 0, (x, y, _x, _y) => {
             let id = this.getNodeID(_x, _y);
             let pId = playerID;
-            this.playablePos[id].zone = player.pos;
             this.playablePos[id].player = player;
             new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
           });
-        else if (player.pos === 2 || player.pos === 3)
+        } else if (player.pos === 2 || player.pos === 3) {
           this.calcPlayerXYpos(nx, y + player.area.y, 2, (x, y, _x, _y) => {
             let id = this.getNodeID(_x, _y);
             let pId = playerID;
-            this.playablePos[id].zone = player.pos;
             this.playablePos[id].player = player;
             new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
           });
+        }
       });
     });
+    console.log(this.gameState.zones);
+  }
+  initHomeZones() {
+    let nNodes = [];
+    let players = this.config.players;
+
+    for (let ID in players) {
+      let player = players[ID];
+      if (player.pos % 2 !== 0) nNodes = [1, 2, 3, 4];
+      else nNodes = [4, 3, 2, 1];
+      nNodes.forEach((nx, y) => {
+        if (player.pos === 1 || player.pos === 4) {
+          this.calcPlayerXYpos(nx, y + player.area.y, 1, (x, y, _x, _y) => {
+            let id = this.getNodeID(_x, _y);
+            //sets number of pieces within the zone that a player occupies
+            if (this.playablePos[id].player) {
+              this.gameState.zones[player.pos - 1] += 1;
+            }
+
+            this.playablePos[id].zone = player.pos; //assign a zone number to the current position in order to set rules for winning an piece entry
+          });
+        } else if (player.pos === 5 || player.pos === 6) {
+          this.calcPlayerXYpos(nx, y + player.area.y, 0, (x, y, _x, _y) => {
+            let id = this.getNodeID(_x, _y);
+            //sets number of pieces within the zone that a player occupies
+            if (this.playablePos[id].player) {
+              this.gameState.zones[player.pos - 1] += 1;
+            }
+            this.playablePos[id].zone = player.pos;
+          });
+        } else if (player.pos === 2 || player.pos === 3) {
+          this.calcPlayerXYpos(nx, y + player.area.y, 2, (x, y, _x, _y) => {
+            let id = this.getNodeID(_x, _y);
+            //sets number of pieces within the zone that a player occupies
+            if (this.playablePos[id].player) {
+              this.gameState.zones[player.pos - 1] += 1;
+            }
+            this.playablePos[id].zone = player.pos;
+          });
+        }
+      });
+    }
+    console.log(this.gameState.zones);
   }
 
   /**
@@ -259,12 +301,10 @@ class Board {
     this.updateBoard(prevPos);
   }
   endTurn() {
-    return new Promise((resolve, reject) => {
-      this.history = [];
-      this.gameState.currentPlayerMoved = false;
-      this.nextPlayer();
-      resolve(this.gameState.currentPlayerID);
-    });
+    this.history = [];
+    this.gameState.currentPlayerMoved = false;
+    this.nextPlayer();
+    return this.gameState.currentPlayerID;
   }
   /**
    * Checks if clicked area is the current player piece, empty gameboard area or another players piece. If it's an area outside the board playable area it returns null.
@@ -302,7 +342,6 @@ class Board {
     if (debugging) {
       this.playablePos[moveTo.id].player = moveFrom.player;
       this.winningMove(moveFrom, moveTo);
-      console.log(this.gameState.zones2);
 
       this.history.push(moveFrom.id); // adds player previous location to history move history
       this.gameState.currentPlayerMoved = true; // the current player moved
@@ -387,35 +426,56 @@ class Board {
   nextPlayer() {
     let currentPlayer = this.gameState.currentPlayerID;
     let turnOrder = this.gameState.turnOrder;
-    let currentPlayerIndex = this.config.players[currentPlayer].pos;
-    let nextPlayerIndex = currentPlayerIndex;
 
-    if (turnOrder[nextPlayerIndex]) {
-      this.gameState.currentPlayerID = turnOrder[nextPlayerIndex];
-    } else {
-      this.gameState.currentPlayerID = this.gameState.turnOrder[0];
+    for (let index = 0; index < turnOrder.length; index++) {
+      if (currentPlayer === turnOrder[index]) {
+        if (turnOrder[index + 1]) {
+          this.gameState.currentPlayerID = turnOrder[index + 1];
+        } else {
+          this.gameState.currentPlayerID = this.gameState.turnOrder[0];
+        }
+        break;
+      }
     }
 
     this.clearSelectedPiece();
   }
-
+/**
+ * Checks to see if the player piece reached the destination home if it has, check to see if all home positions are filled and if filled player wins the game! 
+ * 
+ * @param {object} moveFrom - The position the player piece was moved from
+ * @param {object} moveTo  - The position the player piece was moved to
+ */
   winningMove(moveFrom, moveTo) {
-    //checks to see if the player piece reached the destination home if it has, check to see if all home positions are filled and if filled player wins the game!
-    if (moveFrom.player.homeZone === moveTo.zone) {
+   
+    if (
+      moveFrom.player.homeZone === moveTo.zone &&
+      moveFrom.zone !== moveTo.zone
+    ) {
       this.gameState.zones[moveFrom.player.homeZone - 1] += 1;
       if (this.gameState.zones[moveFrom.player.homeZone - 1] === 10)
         alert(`${moveTo.player.id} player wins!`);
-    }
-
-    //Updates amount of piece in home zone in order to process a player win
-    if (moveFrom.zone && moveTo.zone !== moveFrom.zone) {
+    } else if (
+      moveFrom.zone === moveFrom.player.homeZone &&
+      moveFrom.zone !== moveTo.zone
+    ) {
+      this.gameState.zones[moveFrom.player.homeZone - 1] -= 1;
+    } else if (
+      moveFrom.zone === moveFrom.player.pos &&
+      moveFrom.zone !== moveTo.zone
+    ) {
       this.gameState.zones[moveFrom.player.pos - 1] -= 1;
     } else if (
-      moveTo.zone &&
-      moveFrom.zone !== moveTo.zone &&
-      moveFrom.player.homeZone !== moveTo.zone
+      moveFrom.player.pos === moveTo.zone &&
+      moveFrom.zone !== moveTo.zone
     ) {
       this.gameState.zones[moveFrom.player.pos - 1] += 1;
+    }
+
+    if (debugging) {
+      console.log([moveFrom.player.homeZone, moveTo.zone]);
+
+      console.log(this.gameState.zones);
     }
   }
   /**
