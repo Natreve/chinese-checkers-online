@@ -19,6 +19,7 @@ class GameBoard extends React.Component {
       currentPlayer: gameBoard?.gameState.currentPlayerID,
       gameBoard: gameBoard,
     });
+    //scale canvas based on window resize
   }
   endTurn() {
     this.state.gameBoard.endTurn();

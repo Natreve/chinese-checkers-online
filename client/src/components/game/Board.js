@@ -11,6 +11,8 @@
  * @param {number} - The number of players for the current game
  */
 import Piece from "./Piece.js";
+
+let debugging = false;
 class Board {
   constructor(canvas, nPlayers) {
     if (!canvas || !nPlayers) return;
@@ -25,7 +27,7 @@ class Board {
       radius: ~~(canvas.width / 31), // The radius of the node points(holes on the board)
       background: "#E1BC8B",
       activeColor: "#000",
-      scale: 25,
+      aspectRatio: canvas.width / canvas.height,
       players: {
         red: {
           id: "red",
@@ -85,7 +87,7 @@ class Board {
       currentPlayerMoved: false,
       turnOrder: [],
       posOrder: ["red", "yellow", "blue", "green", "black", "white"],
-      zones: { red: 10, yellow: 10, blue: 10, green: 10, black: 10, white: 10 },
+      zones: [10, 10, 10, 10, 10, 10],// each index represents the player starting zone
     };
 
     this.drawBoard();
@@ -297,8 +299,16 @@ class Board {
     if (!moveTo) return;
     let xMoveBy = Math.abs(moveTo._x - moveFrom._x);
     let yMoveBy = Math.abs(moveTo._y - moveFrom._y);
-    // console.log(moveFrom, moveTo);
+    if (debugging) {
+      this.playablePos[moveTo.id].player = moveFrom.player;
+      this.winningMove(moveFrom, moveTo);
+      console.log(this.gameState.zones2);
 
+      this.history.push(moveFrom.id); // adds player previous location to history move history
+      this.gameState.currentPlayerMoved = true; // the current player moved
+      delete this.playablePos[moveFrom.id].player;
+      this.updateBoard(moveTo);
+    }
     //chain move allowed
     if (this.gameState.currentPlayerMoved) {
       //prevents use from moving backwards without triggering the undo action or going around in circles 😆
@@ -390,15 +400,22 @@ class Board {
   }
 
   winningMove(moveFrom, moveTo) {
-    //Updates amount of piece in home zone in order to process a player win
-    if (moveFrom.zone && !moveTo.zone) {
-      this.gameState.zones[moveFrom.player.id] -= 1;
-    } else if (moveTo.zone && !moveFrom.zone) {
-      this.gameState.zones[moveFrom.player.id] += 1;
-    }
     //checks to see if the player piece reached the destination home if it has, check to see if all home positions are filled and if filled player wins the game!
     if (moveFrom.player.homeZone === moveTo.zone) {
-      alert(`${moveTo.player.id} player wins!`)
+      this.gameState.zones[moveFrom.player.homeZone - 1] += 1;
+      if (this.gameState.zones[moveFrom.player.homeZone - 1] === 10)
+        alert(`${moveTo.player.id} player wins!`);
+    }
+
+    //Updates amount of piece in home zone in order to process a player win
+    if (moveFrom.zone && moveTo.zone !== moveFrom.zone) {
+      this.gameState.zones[moveFrom.player.pos - 1] -= 1;
+    } else if (
+      moveTo.zone &&
+      moveFrom.zone !== moveTo.zone &&
+      moveFrom.player.homeZone !== moveTo.zone
+    ) {
+      this.gameState.zones[moveFrom.player.pos - 1] += 1;
     }
   }
   /**
@@ -408,11 +425,12 @@ class Board {
    * @param {string} color - circle fill color
    */
   drawCircle(x, y, color = "#D0A984") {
+    const radius = this.config.radius;
     this.ctx.save();
     this.ctx.strokeStyle = color;
     this.ctx.fillStyle = color;
     this.ctx.beginPath();
-    this.ctx.arc(x, y, this.config.radius, 0, 2 * Math.PI);
+    this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
     this.ctx.clip();
     this.ctx.fill();
 
