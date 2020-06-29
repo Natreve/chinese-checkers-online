@@ -30,36 +30,42 @@ class Board {
         red: {
           id: "red",
           pos: 1,
+          homeZone: 4,
           color: "#F55145",
           area: { x: 0, y: 0, offset: 6.15 },
         },
         yellow: {
           id: "yellow",
           pos: 2,
+          homeZone: 5,
           color: "#FFEC41",
           area: { x: 4.38, y: 4, offset: 0 },
         },
         blue: {
           id: "blue",
           pos: 3,
+          homeZone: 6,
           color: "#2597F3",
           area: { x: 4.38, y: 9, offset: 0 },
         },
         green: {
           id: "green",
           pos: 4,
+          homeZone: 1,
           color: "#45FF41",
           area: { x: 0, y: 13, offset: 6.15 },
         },
         black: {
           id: "black",
           pos: 5,
+          homeZone: 2,
           color: "#505457",
           area: { x: -4.6, y: 9, offset: 0 },
         },
         white: {
           id: "white",
           pos: 6,
+          homeZone: 3,
           color: "#F5F5F5",
           area: { x: -4.6, y: 4, offset: 0 },
         },
@@ -79,10 +85,10 @@ class Board {
       currentPlayerMoved: false,
       turnOrder: [],
       posOrder: ["red", "yellow", "blue", "green", "black", "white"],
+      zones: { red: 10, yellow: 10, blue: 10, green: 10, black: 10, white: 10 },
     };
 
     this.drawBoard();
-    this.drawPlayerBases();
     this.initPlayers(nPlayers);
     this.initGameEvents();
   }
@@ -94,7 +100,7 @@ class Board {
      * The number of playable positions accross the x-axis where the y-axis is represented by the array index.
      * Ane xample of this would be that, at index 2(y-axis:2) there are 3 playable positions at x-axis:1, x-axis:2, x-axis:3.
      */
-
+    this.drawPlayerBases();
     [1, 2, 3, 4, 13, 12, 11, 10, 9, 10, 11, 12, 13, 4, 3, 2, 1].forEach(
       (nNodes, ny) => {
         this.calcXYpos(nNodes, ny, (x, y, _x, _y) => {
@@ -140,7 +146,7 @@ class Board {
    * @param {Piece} piece - The selected location that the player piece will be moved to. Might need to change the name 😆
    */
 
-  async updateBoard(piece) {
+  updateBoard(piece) {
     this.ctx.clearRect(0, 0, this.config.width, this.config.height);
     let nodes = this.playablePos;
 
@@ -187,6 +193,8 @@ class Board {
           this.calcPlayerXYpos(nx, y + player.area.y, 1, (x, y, _x, _y) => {
             let id = this.getNodeID(_x, _y);
             let pId = playerID;
+
+            this.playablePos[id].zone = player.pos; //assign a zone number in order to set rules for winning an piece entry
             this.playablePos[id].player = player;
             new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
           });
@@ -194,6 +202,7 @@ class Board {
           this.calcPlayerXYpos(nx, y + player.area.y, 0, (x, y, _x, _y) => {
             let id = this.getNodeID(_x, _y);
             let pId = playerID;
+            this.playablePos[id].zone = player.pos;
             this.playablePos[id].player = player;
             new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
           });
@@ -201,12 +210,14 @@ class Board {
           this.calcPlayerXYpos(nx, y + player.area.y, 2, (x, y, _x, _y) => {
             let id = this.getNodeID(_x, _y);
             let pId = playerID;
+            this.playablePos[id].zone = player.pos;
             this.playablePos[id].player = player;
             new Piece(pId, this.ctx, x, y, this.config.radius, player.color);
           });
       });
     });
   }
+
   /**
    * initGameEvents() initialises all game event listeners in order to handle all player interaction with board and it's other connecting functions
    */
@@ -224,7 +235,6 @@ class Board {
     const selectedPos = this.isPlayable(pos); //checks if the location clicked is a playable position
     const playerMoved = this.gameState.currentPlayerMoved;
     const selectedPiece = this.gameState.selectedPiece;
-
     if (selectedPos) {
       if (selectedPos.player) {
         if (selectedPos.player.id === currentPlayer && !playerMoved) {
@@ -241,8 +251,7 @@ class Board {
     const id = this.history.pop();
     const prevPos = this.playablePos[id];
     const selectedPiece = this.gameState.selectedPiece;
-    console.log([prevPos, selectedPiece]);
-
+    this.gameState.currentPlayerMoved = false;
     this.playablePos[prevPos.id].player = selectedPiece.player;
     delete this.playablePos[selectedPiece.id].player; // removed the previous position
     this.updateBoard(prevPos);
@@ -288,6 +297,7 @@ class Board {
     if (!moveTo) return;
     let xMoveBy = Math.abs(moveTo._x - moveFrom._x);
     let yMoveBy = Math.abs(moveTo._y - moveFrom._y);
+    // console.log(moveFrom, moveTo);
 
     //chain move allowed
     if (this.gameState.currentPlayerMoved) {
@@ -309,6 +319,8 @@ class Board {
         if (!this.playablePos[id]) return;
         if (this.playablePos[id].player) {
           this.playablePos[moveTo.id].player = moveFrom.player;
+          this.winningMove(moveFrom, moveTo);
+
           this.history.push(moveFrom.id); // adds player previous location to history move history
           delete this.playablePos[moveFrom.id].player; // removed the previous position
           this.updateBoard(moveTo);
@@ -317,14 +329,15 @@ class Board {
 
       return;
     }
-
+    // single moves allowed
     if (
       (xMoveBy === 1 && yMoveBy === 1) ||
       (xMoveBy === 1 && yMoveBy === 0) ||
       (xMoveBy === 2 && yMoveBy === 0)
     ) {
-      // single moves allowed
       this.playablePos[moveTo.id].player = moveFrom.player;
+      this.winningMove(moveFrom, moveTo);
+
       this.history.push(moveFrom.id); // adds player previous location to history move history
       this.gameState.currentPlayerMoved = true; // the current player moved
       delete this.playablePos[moveFrom.id].player;
@@ -341,6 +354,8 @@ class Board {
 
       if (this.playablePos[id].player) {
         this.playablePos[moveTo.id].player = moveFrom.player;
+        this.winningMove(moveFrom, moveTo);
+
         this.history.push(moveFrom.id); // adds player previous location to history move history
         this.gameState.currentPlayerMoved = true; // the current player moved
         delete this.playablePos[moveFrom.id].player; // removed the previous position
@@ -368,12 +383,24 @@ class Board {
     if (turnOrder[nextPlayerIndex]) {
       this.gameState.currentPlayerID = turnOrder[nextPlayerIndex];
     } else {
-      this.gameState.currentPlayerID = this.gameState.turnOrder[0]; //"red"
+      this.gameState.currentPlayerID = this.gameState.turnOrder[0];
     }
 
     this.clearSelectedPiece();
   }
 
+  winningMove(moveFrom, moveTo) {
+    //Updates amount of piece in home zone in order to process a player win
+    if (moveFrom.zone && !moveTo.zone) {
+      this.gameState.zones[moveFrom.player.id] -= 1;
+    } else if (moveTo.zone && !moveFrom.zone) {
+      this.gameState.zones[moveFrom.player.id] += 1;
+    }
+    //checks to see if the player piece reached the destination home if it has, check to see if all home positions are filled and if filled player wins the game!
+    if (moveFrom.player.homeZone === moveTo.zone) {
+      alert(`${moveTo.player.id} player wins!`)
+    }
+  }
   /**
    * Draws a circle with a fill color.
    * @param {number} x - x position
