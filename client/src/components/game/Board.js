@@ -72,7 +72,7 @@ class Board {
    *
    * @param {Number} nPlayers - The number of players that will join the game.
    */
-  async init(nPlayers) {
+  init(nPlayers) {
     this.gameState = {
       selectedPiece: null,
       currentPlayerID: null,
@@ -81,19 +81,20 @@ class Board {
       posOrder: ["red", "yellow", "blue", "green", "black", "white"],
     };
 
-    await this.drawBoard();
-    await this.initPlayers(nPlayers);
-    await this.initGameEvents();
+    this.drawBoard();
+    this.drawPlayerBases();
+    this.initPlayers(nPlayers);
+    this.initGameEvents();
   }
   /**
    * The drawBoard() method draws each individual playable node points accross a x/y axis.
    */
-  async drawBoard() {
+  drawBoard() {
     /**
      * The number of playable positions accross the x-axis where the y-axis is represented by the array index.
      * Ane xample of this would be that, at index 2(y-axis:2) there are 3 playable positions at x-axis:1, x-axis:2, x-axis:3.
      */
-    await this.drawPlayerBases();
+
     [1, 2, 3, 4, 13, 12, 11, 10, 9, 10, 11, 12, 13, 4, 3, 2, 1].forEach(
       (nNodes, ny) => {
         this.calcXYpos(nNodes, ny, (x, y, _x, _y) => {
@@ -107,29 +108,29 @@ class Board {
   /**
    * The drawPlayerBases() method draws a triangle at each player starting points to represent the players home base.
    */
-  async drawPlayerBases() {
+  drawPlayerBases() {
     //RED BASE
-    this.calcTrianglePos(141, 110, 118).then((pos) => {
+    this.calcTrianglePos(141, 110, 118, false, (pos) => {
       this.drawTriangle(...pos, "rgba(245, 81, 69, 0.5)");
     });
     //YELLOW BASE
-    this.calcTrianglePos(280, 135, 118, true).then((pos) => {
+    this.calcTrianglePos(280, 135, 118, true, (pos) => {
       this.drawTriangle(...pos, "rgba(255, 236, 65, 0.5)");
     });
     //BLUE BASE
-    this.calcTrianglePos(281, 392, 118).then((pos) => {
+    this.calcTrianglePos(281, 392, 118, false, (pos) => {
       this.drawTriangle(...pos, "rgba(37, 151, 243, 0.5)");
     });
     //Green BASE
-    this.calcTrianglePos(141, 410, 118, true).then((pos) => {
+    this.calcTrianglePos(141, 410, 118, true, (pos) => {
       this.drawTriangle(...pos, "rgba(69, 255, 65, 0.5)");
     });
     //BLACK BASE
-    this.calcTrianglePos(1, 389, 118).then((pos) => {
+    this.calcTrianglePos(1, 389, 118, false, (pos) => {
       this.drawTriangle(...pos, "rgba(80, 84, 87, 0.5)");
     });
     //WHITE BASE
-    this.calcTrianglePos(1, 135, 118, true).then((pos) => {
+    this.calcTrianglePos(1, 135, 118, true, (pos) => {
       this.drawTriangle(...pos, "rgba(245, 245, 245, 0.5)");
     });
   }
@@ -142,7 +143,8 @@ class Board {
   async updateBoard(piece) {
     this.ctx.clearRect(0, 0, this.config.width, this.config.height);
     let nodes = this.playablePos;
-    await this.drawPlayerBases();
+
+    this.drawPlayerBases();
     for (let node in nodes) {
       if (nodes[node].player) {
         new Piece(
@@ -164,7 +166,7 @@ class Board {
    * This method initialises the starting positions of each player pieces on the game board, this method is called after the board has been drawn
    * @param {number} nPlayers -The number of players who will play the game
    */
-  async initPlayers(nPlayers) {
+  initPlayers(nPlayers) {
     let playOrder = [];
     if (nPlayers === 2) playOrder = [1, 4];
     else if (nPlayers === 3) playOrder = [6, 2, 4];
@@ -208,7 +210,7 @@ class Board {
   /**
    * initGameEvents() initialises all game event listeners in order to handle all player interaction with board and it's other connecting functions
    */
-  async initGameEvents() {
+  initGameEvents() {
     let onBoardClick = this.onBoardClick.bind(this);
     this.canvas.addEventListener("click", onBoardClick, false);
   }
@@ -235,10 +237,15 @@ class Board {
   }
   //Moves the current piece back to the previous position and re-renders board
   undoMove() {
-    // const id = this.history.pop();
-    // const prevPos = this.playablePos[id];
-    // const selectedPiece = this.gameState.selectedPiece;
-    // this.move(selectedPiece, prevPos);
+    if (this.history.length < 1) return;
+    const id = this.history.pop();
+    const prevPos = this.playablePos[id];
+    const selectedPiece = this.gameState.selectedPiece;
+    console.log([prevPos, selectedPiece]);
+
+    this.playablePos[prevPos.id].player = selectedPiece.player;
+    delete this.playablePos[selectedPiece.id].player; // removed the previous position
+    this.updateBoard(prevPos);
   }
   endTurn() {
     return new Promise((resolve, reject) => {
@@ -267,8 +274,8 @@ class Board {
    * Sets the clicked player piece to an active state by drawing a stroke around it.
    * @param {Piece} piece - The player's currently selected  game piece
    */
-  async setSelected(piece) {
-    await this.clearSelectedPiece();
+  setSelected(piece) {
+    this.clearSelectedPiece();
     this.gameState.selectedPiece = piece;
     this.drawStroke(piece.x, piece.y);
   }
@@ -281,9 +288,6 @@ class Board {
     if (!moveTo) return;
     let xMoveBy = Math.abs(moveTo._x - moveFrom._x);
     let yMoveBy = Math.abs(moveTo._y - moveFrom._y);
-
-    // console.log(`From X:${moveFrom._x}, Y:${moveFrom._y}`);
-    // console.log(`TO X:${moveTo._x}, Y:${moveTo._y}`);
 
     //chain move allowed
     if (this.gameState.currentPlayerMoved) {
@@ -347,7 +351,7 @@ class Board {
   /**
    * Clears the selected player piece when they click the cancel selection button and updates the game board
    */
-  async clearSelectedPiece() {
+  clearSelectedPiece() {
     const selectedPiece = this.gameState.selectedPiece;
     if (selectedPiece) this.gameState.selectedPiece = null;
     this.updateBoard();
@@ -435,16 +439,14 @@ class Board {
    * @param {number} width  - the lenght for the base of the triangle
    * @param {boolean} inverted - Whether the triangle is reverse or not
    */
-  calcTrianglePos(moveX, moveY, width, inverted = false) {
-    return new Promise((resolve, reject) => {
-      const height = width * Math.cos(Math.PI / 6);
-      let x1 = moveX;
-      let x2 = width + moveX;
-      let x3 = moveX + width / 2;
-      let y1 = moveY;
-      let y2 = moveY - height * (inverted ? -1 : 1);
-      resolve([x1, x2, x3, y1, y2]);
-    });
+  calcTrianglePos(moveX, moveY, width, inverted = false, callback) {
+    const height = width * Math.cos(Math.PI / 6);
+    let x1 = moveX;
+    let x2 = width + moveX;
+    let x3 = moveX + width / 2;
+    let y1 = moveY;
+    let y2 = moveY - height * (inverted ? -1 : 1);
+    if (typeof callback === "function") callback([x1, x2, x3, y1, y2]);
   }
 
   /**
@@ -461,7 +463,7 @@ class Board {
       let x = 13 + 25 * (i + 6) * pad - (n > 1 ? adj * (n - 1) : 0);
       let y = 13 + 25 * ny * pad;
       let _x = 14 - n + (i + i);
-      if (callback) callback(x, y, _x, ny);
+      if (typeof callback === "function") callback(x, y, _x, ny);
     }
   }
 
@@ -496,7 +498,7 @@ class Board {
         // s = 1 * (13 - nn);
         // x = 13 + 25 * (i + 6) * pad - adj * (13 - 1) + 31.13 * s;
       }
-      if (callback) callback(x, y, _x, ny);
+      if (typeof callback === "function") callback(x, y, _x, ny);
     }
   }
 
