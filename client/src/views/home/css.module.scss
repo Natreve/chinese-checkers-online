@@ -1,0 +1,45 @@
+@media only screen and (max-width: 390px) {
+    .slide {
+        h1 {
+            font-size: 34px !important;
+            line-height: 41px;
+        }
+
+        p {
+            font-size: 16px !important;
+            line-height: 14px;
+        }
+    }
+}
+
+.slide {
+    outline: none !important;
+    margin: 0 auto;
+    max-width: 612px;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    h1 {
+        font-family: Lato;
+        font-style: normal;
+        font-weight: bold;
+        font-size: 68px;
+        line-height: 82px;
+        color: #505457;
+    }
+
+    p {
+        font-family: Lato;
+        font-style: normal;
+        font-weight: 100;
+        font-size: 24px;
+        line-height: 28px;
+        text-align: center;
+
+        color: #505457;
+    }
+
+
+}

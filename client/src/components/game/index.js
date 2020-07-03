@@ -1,7 +1,6 @@
 import React from "react";
 import css from "./css.module.scss";
 import Board from "./Board";
-
 class GameBoard extends React.Component {
   constructor() {
     super();
@@ -14,12 +13,11 @@ class GameBoard extends React.Component {
   }
   componentDidMount() {
     const canvas = this.canvasRef.current;
-    const gameBoard = new Board(canvas, 3);
+    const gameBoard = new Board(canvas, 2);
     this.setState({
       currentPlayer: gameBoard?.gameState.currentPlayerID,
       gameBoard: gameBoard,
     });
-    //scale canvas based on window resize
   }
   endTurn() {
     this.setState({
