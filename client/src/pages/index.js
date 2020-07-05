@@ -16,16 +16,19 @@ const NotFound = Loadable(() => import("views/404"), {
   fallback: <div>404</div>,
 })
 
-const IndexPage = () => (
-  <>
-    <SEO title="Home" />
-    <Router basepath="/">
-      <Home path="/" />
-      <Tutorial path="tutorial" />
-      <Game path="game" />
-      <NotFound default />
-    </Router>
-  </>
-)
+const IndexPage = () => {
+  
+  return (
+    <>
+      <SEO title="Home" />
+      <Router basepath="/">
+        <Home path="/" />
+        <Tutorial path="tutorial" />
+        <Game path="game/*" />
+        <NotFound default />
+      </Router>
+    </>
+  )
+}
 
 export default IndexPage

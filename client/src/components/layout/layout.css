@@ -2,6 +2,8 @@
 @import url("https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.min.css");
 @import url("https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick-theme.min.css");
 
+@import url(https://fonts.googleapis.com/css?family=Roboto:400,300);
+
 html {
   font-family: sans-serif;
   -ms-text-size-adjust: 100%;
