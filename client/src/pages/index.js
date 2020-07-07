@@ -2,22 +2,21 @@ import React from "react"
 import { Router } from "@reach/router"
 import Loadable from "@loadable/component"
 import SEO from "components/seo"
-
+import Loading from "components/loading"
 const Home = Loadable(() => import("views/home"), {
-  fallback: <div>Loading</div>,
+  fallback: <Loading />,
 })
 const Tutorial = Loadable(() => import("views/tutorial"), {
-  fallback: <div>Loading</div>,
+  fallback: <Loading />,
 })
 const Game = Loadable(() => import("views/game"), {
-  fallback: <div>Loading</div>,
+  fallback: <Loading />,
 })
 const NotFound = Loadable(() => import("views/404"), {
-  fallback: <div>404</div>,
+  fallback: <Loading />,
 })
 
 const IndexPage = () => {
-  
   return (
     <>
       <SEO title="Home" />

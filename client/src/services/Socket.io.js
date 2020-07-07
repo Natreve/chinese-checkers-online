@@ -47,7 +47,6 @@ function opponentMovedPiece(cb) {
   })
 }
 
-// export default socket
 export {
   socket,
   createGame,

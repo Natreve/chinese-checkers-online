@@ -3,41 +3,32 @@ import { Router } from "@reach/router"
 import GameBoard from "components/game"
 import Layout from "components/layout"
 import Loading from "components/loading"
-import { socket, joinGame } from "services/Socket.io"
+// import { socket, joinGame } from "services/Socket.io"
 import css from "./css.module.scss"
 const Game = () => {
   useEffect(() => {
-    socket.on("connect", () => {
-      console.log("connected", socket.connected)
-    })
-
-    return () => socket.disconnect()
+    // socket.on("connect", () => {
+    //   console.log("connected", socket.connected)
+    // })
+    // return () => socket.disconnect()
   }, [])
 
   return (
     <Layout>
       <Router basepath="/game">
-        <GameBoard path="/" />
+        {/* <GameBoard path="/" /> */}
+        <Register path="/register" />
         <JoinGame path="/join/:gameID" />
         <CreateGame path="/create" />
       </Router>
     </Layout>
   )
 }
-
+const Register = () => {}
 const JoinGame = props => {
   const [gameStatus, setGameStatus] = useState("joining")
   useEffect(() => {
-    if (socket.id) {
-      console.log("Join game")
-      // joinGame(socket.id, props.username, game => {
-      //   console.log(game)
-      //   setGameStatus(game.status)
-      // })
-    }
-    // socket.on("game", game => {
-    //   console.log(game)
-    // })
+    if (false) setGameStatus("hello")
   }, [])
 
   switch (gameStatus) {
