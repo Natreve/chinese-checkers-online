@@ -1,42 +1,46 @@
-import React from "react";
-import css from "./css.module.scss";
-import Board from "./Board";
+import React from "react"
+import css from "./css.module.scss"
+import Board from "./Board"
 class GameBoard extends React.Component {
   constructor() {
-    super();
-    this.width = 399;
-    this.height = 523;
-    this.canvasRef = React.createRef();
+    super()
+    this.canvasRef = React.createRef()
     this.state = {
-      gameBoard: null,
-    };
+      board: null,
+    }
   }
   componentDidMount() {
-    const canvas = this.canvasRef.current;
-    const gameBoard = new Board(canvas, 2);
+    const canvas = this.canvasRef.current
+    const container = document.querySelector(`.container main`)
+    canvas.width = container.clientWidth
+    canvas.height = container.clientWidth
+
+    let board = new Board(canvas, 2)
+    window.addEventListener("resize", e => {
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientWidth;
+      board.resize(container.clientWidth);
+    })
     this.setState({
-      currentPlayer: gameBoard?.gameState.currentPlayerID,
-      gameBoard: gameBoard,
-    });
+      currentPlayer: board?.state.currentPlayerTurn,
+      board: board,
+    })
   }
   endTurn() {
     this.setState({
-      currentPlayer: this.state.gameBoard.endTurn(),
-    });
+      currentPlayer: this.state.board.endTurn(),
+    })
   }
   undoMove() {
-    this.state.gameBoard.undoMove();
+    this.state.board.undoMove()
   }
   render() {
+    console.log(this.state.currentPlayer?.colorID);
+    
     return (
       <>
-        <h1>Player Turn: {this.state.currentPlayer}</h1>
-        <canvas
-          ref={this.canvasRef}
-          className={css.canvas}
-          width={this.width}
-          height={this.height}
-        ></canvas>
+        <h1>Player Turn: {this.state.currentPlayer?.colorID}</h1>
+        <canvas ref={this.canvasRef} className={css.canvas}></canvas>
         <div>
           <button className="endTurn" onClick={() => this.endTurn()}>
             END TURN
@@ -46,8 +50,8 @@ class GameBoard extends React.Component {
           </button>
         </div>
       </>
-    );
+    )
   }
 }
 
-export default GameBoard;
+export default GameBoard

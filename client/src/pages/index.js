@@ -23,7 +23,7 @@ const IndexPage = () => {
       <Router basepath="/">
         <Home path="/" />
         <Tutorial path="tutorial" />
-        <Game path="game/*" />
+        <Game path="game/:action" />
         <NotFound default />
       </Router>
     </>

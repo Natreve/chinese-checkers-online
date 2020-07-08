@@ -1,7 +1,7 @@
 const Player = require("./Player");
 
 /**
- * This just addes a function called random to all javascript objects, this function basically picks a random index within an array
+ * This just adds a function called random to all javascript objects, this function basically picks a random index within an array specifically to randomly choose the number of players in a game if it wasn't provided
  */
 Object.prototype.random = function () {
   return this[Math.floor(Math.random() * this.length)];
@@ -15,7 +15,6 @@ class Game {
    * @param {object} config The configuration for the game which includes the *playerLimit*:number of players that can join the game, *isPublic*: whether the game can be joined by anyone looking for a game or via a generated link, *status*: Whether the game as started, ended or queued by players
    */
   constructor(id, host, { playerLimit, isPublic, status }) {
-    
     this.id = id;
     this.host = host;
     this.players = host ? [host] : [];
@@ -156,6 +155,10 @@ class Game {
       this.config.status = "started";
     });
   }
+  /**
+   * TODO
+   * Implement the clean up function
+   */
   // signals the game has ended and cleans up the game object
   end() {}
   //EVENT HANDLERS
@@ -255,6 +258,10 @@ class Game {
     this.nextPlayer();
     return this.state.currentPlayerTurn;
   }
+  /**
+   * TODO
+   * Implement player undo function
+   */
   onPlayerUndo() {}
   winningMove(from, to) {
     if (from.player.homeZone === to.zone && from.zone !== to.zone) {

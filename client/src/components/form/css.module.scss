@@ -1,0 +1,31 @@
+
+.field {
+    label {
+        display: flex;
+        flex-direction: column;
+
+        input {
+            background-color: #98C4E8;
+            border: none;
+            box-shadow: inset 0px 4px 4px rgba(0, 0, 0, 0.06);
+            border-radius: 10px;
+            height: 40px;
+            color: white;
+            text-align: center;
+            font-family: Roboto;
+            outline: none !important;
+
+            &::placeholder {
+                font-family: Roboto;
+                font-style: normal;
+                font-weight: normal;
+                // font-size: 32px;
+                line-height: 37px;
+                text-align: center;
+
+                color: rgba(255, 255, 255, 0.53);
+            }
+        }
+    }
+
+}
