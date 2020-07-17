@@ -1,30 +1,20 @@
+/* jshint esversion:8 */
 const Player = require("./Player");
-
-/**
- * This just adds a function called random to all javascript objects, this function basically picks a random index within an array specifically to randomly choose the number of players in a game if it wasn't provided
- */
-Object.prototype.random = function () {
-  return this[Math.floor(Math.random() * this.length)];
-};
 
 class Game {
   /**
-   *
    * @param {string} id A unique id for a new game.
-   * @param {object} host The player that created the game, this parameter is optional
    * @param {object} config The configuration for the game which includes the *playerLimit*:number of players that can join the game, *isPublic*: whether the game can be joined by anyone looking for a game or via a generated link, *status*: Whether the game as started, ended or queued by players
    */
-  constructor(id, host, { playerLimit, isPublic, status }) {
+  constructor(id, config) {
     this.id = id;
-    this.host = host;
-    this.players = host ? [host] : [];
+    this.players = [];
     this.config = {
-      playerLimit: playerLimit,
-      playerCount: 1,
-      isPublic: isPublic,
-      status: status,
+      playerLimit: config.playerLimit,
+      playerCount: 0,
+      isPublic: config.isPublic,
+      status: config.status,
     };
-
     this.state = {
       history: [], //the current players move history for their current turn
       playablePos: {}, //Position of every playable locations on the board
@@ -34,32 +24,28 @@ class Game {
       zones: [0, 0, 0, 0, 0, 0], // The amount of player pieces within their destination zone
     };
   }
-  //adds a player to the game
+  static fromJson(json) {
+    let game = new Game(json.id, json.config);
+    Object.assign(game, json);
+    return game;
+  }
+  toJson() {
+    return JSON.parse(JSON.stringify(this));
+  }
   add(player) {
-    if (this.isFull()) return this.updateStatus("started");
-
+    if (this.isFull()) return false;
     this.players.push(player);
     this.config.playerCount++;
+    if (this.isFull()) this.config.status = "started";
   }
-  //removes a player from the game based on their uid
-  remove(uid) {
-    this.players = this.players.filter((player) => player.uid !== uid);
+  remove(player) {
+    this.players = this.players.filter((_player) => player.uid !== _player.uid);
     if (this.config.playerCount !== 0) this.config.playerCount--;
   }
-
-  //sets the status of the game: started, queued, ended
-  updateStatus(status) {
-    this.config.status = status;
-    return false;
-  }
-
-  // checks if the game is full, this generally means the game has already started
   isFull() {
     if (this.config.playerLimit === this.config.playerCount) return true;
     else return false;
   }
-
-  //Init the game states such has playable positions, player positions, etc
   start() {
     //game can't start unless the game is full
     if (!this.isFull()) return false;
@@ -96,11 +82,8 @@ class Game {
       _player.pos = pos; // sets the player position on the board clockwise based on their turn order value
 
       //checks player position to determine if player piece are rightsideup or upsidedown
-      if (_player.pos % 2 !== 0) {
-        nNodes = [1, 2, 3, 4];
-      } else {
-        nNodes = [4, 3, 2, 1];
-      }
+      if (_player.pos % 2 !== 0) nNodes = [1, 2, 3, 4];
+      else nNodes = [4, 3, 2, 1];
 
       nNodes.forEach((nx, y) => {
         if (_player.pos === 1 || _player.pos === 4) {
@@ -155,13 +138,6 @@ class Game {
       this.config.status = "started";
     });
   }
-  /**
-   * TODO
-   * Implement the clean up function
-   */
-  // signals the game has ended and cleans up the game object
-  end() {}
-  //EVENT HANDLERS
   onPlayerMove(from, to) {
     if (!to) {
       console.log("Invalid move to location");
@@ -300,18 +276,18 @@ class Game {
    * @param {number} sp  - where the nodes start 0 being at the begining of the y-axis, 1 at the enter and 2 and the end.
    * @param {number} callback - callback function to return the actual x, y coordinates on the board.
    */
-  _calcPlayerXYpos(nn, y, sp, cb) {
-    for (let i = 0; i < nn; i++) {
+  _calcPlayerXYpos(nn, ny, sp, callback) {
+    for (let i = 1; i < nn + 1; i++) {
       let x = 0;
       if (sp === 0) {
-        x = 4 - nn + (i + i) + 1;
+        x = 4 - nn + (i + i) - 1;
       } else if (sp === 1) {
-        x = 14 - nn + (i + i);
+        x = 12 - nn + (i + i);
       } else if (sp === 2) {
+        // x = 20 - nn + (i + i) + 1;
         x = 20 - nn + (i + i) + 3;
       }
-
-      if (typeof cb === "function") cb(x, y);
+      if (typeof callback === "function") callback(x, ny);
     }
   }
 }

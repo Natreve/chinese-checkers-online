@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react"
 import Loadable from "@loadable/component"
 import { Link } from "gatsby"
-// import { socket, joinGame } from "services/Socket.io"
 import localforge from "localforage"
+import firebase from "gatsby-plugin-firebase"
 import GameBoard from "components/game"
 import Layout from "components/layout"
 import Loading from "components/loading"
@@ -43,11 +43,33 @@ const CreateUsername = Loadable(() => import("views/create-username"), {
 const JoinGame = props => {
   const [gameStatus, setGameStatus] = useState("joining")
   const user = props.user
-
+  const firestore = firebase.firestore()
+  if (process.env.NODE_ENV === "development") {
+    console.log(firestore.app.options)
+    firestore.settings({
+      host: "localhost:8080",
+      ssl: false,
+    })
+  }
   useEffect(() => {
-    if (false) setGameStatus("hello")
-  }, [])
-
+    joinGame()
+    async function joinGame() {
+      const response = await fetch("http://localhost:5000", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "joinGame", user: user }),
+      })
+      const game = await response.json()
+      firestore
+        .collection("games")
+        .doc(game.gameID)
+        .onSnapshot(async function (doc) {
+          setGameStatus(doc.data().config.status)
+        })
+    }
+  }, [firestore, user])
   switch (gameStatus) {
     case "joining":
       return (

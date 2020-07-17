@@ -17,6 +17,7 @@ const NotFound = Loadable(() => import("views/404"), {
 })
 
 const IndexPage = () => {
+
   return (
     <>
       <SEO title="Home" />

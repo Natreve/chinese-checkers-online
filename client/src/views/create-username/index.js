@@ -7,7 +7,7 @@ import Button from "components/buttons"
 
 const CreateUsername = props => {
   const user = props.user
-  
+
   return (
     <Form id="createUsername" onSubmit={onSubmit}>
       <section className={css.section}>
@@ -22,24 +22,22 @@ const CreateUsername = props => {
       </section>
     </Form>
   )
-  async function  onSubmit(e) {
+  async function onSubmit(e) {
     e.preventDefault()
     let formData = new FormData(e.target)
     let username = formData.get("username")
     if (!user) {
       await localforge.setItem("user", { uid: uid(), username: username })
-      alert("username created")
+
       refreshPage()
     } else {
       user.username = username
       await localforge.setItem("user", user)
-      alert("username updated")
       refreshPage()
     }
-    
   }
   function refreshPage() {
-    window.location.reload(false);
+    window.location.reload(false)
   }
 }
 export default CreateUsername
