@@ -1,3 +1,4 @@
+// jshint esversion: 8
 const functions = require("firebase-functions");
 const app = require("express")();
 const admin = require("firebase-admin");
@@ -21,7 +22,7 @@ const isEmpty = function (obj) {
   }
   return true;
 };
-
+//meh
 app.use((req, res, next) => {
   res.set("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
   res.set("Access-Control-Allow-Origin", "http://localhost:8000");

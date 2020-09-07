@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react"
 import Loadable from "@loadable/component"
-import { Link } from "gatsby"
 import localforge from "localforage"
 import firebase from "gatsby-plugin-firebase"
 import GameBoard from "components/game"
@@ -8,6 +7,7 @@ import Layout from "components/layout"
 import Loading from "components/loading"
 import css from "./css.module.scss"
 
+const CreateGame = Loadable(() => import("./create"))
 const Game = props => {
   const [screen, setScreen] = useState(<Loading />)
   const action = props.action
@@ -35,17 +35,17 @@ const Game = props => {
     })
   }, [action])
 
-  return <Layout>{screen}</Layout>
+  return screen
 }
 const CreateUsername = Loadable(() => import("views/create-username"), {
   fallback: <Loading />,
 })
 const JoinGame = props => {
   const [gameStatus, setGameStatus] = useState("joining")
+  const [game, setGame] = useState(null)
   const user = props.user
   const firestore = firebase.firestore()
   if (process.env.NODE_ENV === "development") {
-    console.log(firestore.app.options)
     firestore.settings({
       host: "localhost:8080",
       ssl: false,
@@ -61,56 +61,53 @@ const JoinGame = props => {
         },
         body: JSON.stringify({ action: "joinGame", user: user }),
       })
-      const game = await response.json()
+      const data = await response.json()
       firestore
         .collection("games")
-        .doc(game.gameID)
+        .doc(data.gameID)
         .onSnapshot(async function (doc) {
-          setGameStatus(doc.data().config.status)
+          if (doc.data()) {
+            setGame(doc.data())
+            setGameStatus(doc.data().config.status)
+          }
         })
     }
   }, [firestore, user])
   switch (gameStatus) {
     case "joining":
       return (
-        <section className={css.section}>
-          <h1>Joining Game...</h1>
-          <p>
-            We’re search for an available game, this shouldn’t take too long.
-          </p>
-          <Loading />
-        </section>
+        <Layout maxWidth="100%">
+          <section className={css.section}>
+            <h1>Joining Game...</h1>
+            <p>
+              We’re search for an available game, this shouldn’t take too long.
+            </p>
+            <Loading />
+          </section>
+        </Layout>
       )
     case "queued":
       return (
-        <section className={css.section}>
-          <h1>Waiting on players...</h1>
-          <p>
-            We’ve found a game, we’re waiting on other players to join, this
-            shouldn’t take long either
-          </p>
-          <Loading />
-        </section>
+        <Layout maxWidth="100%">
+          <section className={css.section}>
+            <h1>Waiting on players...</h1>
+            <p>
+              We’ve found a game, we’re waiting on other players to join, this
+              shouldn’t take long either
+            </p>
+            <Loading />
+          </section>
+        </Layout>
       )
     case "started":
-      return <GameBoard user={user} />
+      return (
+        <Layout>
+          <GameBoard user={user} game={game} />
+        </Layout>
+      )
     default:
       break
   }
 }
-const CreateGame = () => (
-  <section className={css.section}>
-    <h1>Create Game...</h1>
-    <p>
-      This feature is currently under
-      <span role="img" aria-label="construction">
-        {" "}
-        🚧 👷
-      </span>
-      , will enable soon in the meantime try joining a game.
-    </p>
-    <Link to="/">Back to Home</Link>
-  </section>
-)
 
 export default Game

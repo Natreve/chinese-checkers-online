@@ -1,12 +1,13 @@
 import React from "react"
 import css from "./css.module.scss"
-import Board from "./Board"
+import Layout from "../layout"
+import Game from "./Game"
 class GameBoard extends React.Component {
   constructor() {
     super()
     this.canvasRef = React.createRef()
     this.state = {
-      board: null,
+      game: null,
     }
   }
   componentDidMount() {
@@ -14,31 +15,29 @@ class GameBoard extends React.Component {
     const container = document.querySelector(`.container main`)
     canvas.width = container.clientWidth
     canvas.height = container.clientWidth
+    const game = new Game(canvas, this.props.game)
 
-    let board = new Board(canvas, 2)
     window.addEventListener("resize", e => {
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientWidth;
-      board.resize(container.clientWidth);
+      canvas.width = container.clientWidth
+      canvas.height = container.clientWidth
+      game.resize(container.clientWidth)
     })
     this.setState({
-      currentPlayer: board?.state.currentPlayerTurn,
-      board: board,
+      currentPlayer: game?.state.currentPlayerTurn,
+      game: game,
     })
   }
   endTurn() {
     this.setState({
-      currentPlayer: this.state.board.endTurn(),
+      currentPlayer: this.state.game.endTurn(),
     })
   }
   undoMove() {
-    this.state.board.undoMove()
+    this.state.game.undoMove()
   }
   render() {
-    console.log(this.state.currentPlayer?.colorID);
-    
     return (
-      <>
+      <Layout>
         <h1>Player Turn: {this.state.currentPlayer?.colorID}</h1>
         <canvas ref={this.canvasRef} className={css.canvas}></canvas>
         <div>
@@ -49,7 +48,7 @@ class GameBoard extends React.Component {
             UNDO
           </button>
         </div>
-      </>
+      </Layout>
     )
   }
 }

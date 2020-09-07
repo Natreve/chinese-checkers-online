@@ -9,7 +9,7 @@ const Layout = props => {
   return (
     <>
       {props.header}
-      <div className="container">
+      <div className="container" style={{maxWidth:props.maxWidth}}>
         <main>{props.children}</main>
       </div>
       <Footer />

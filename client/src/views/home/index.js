@@ -8,7 +8,7 @@ import Layout from "components/layout"
 const Home = () => {
   useEffect(() => {})
   return (
-    <Layout>
+    <Layout maxWidth="100%">
       <Carousel>
         <section className={css.slide}>
           <h1>Learn to play</h1>
@@ -53,7 +53,6 @@ const Home = () => {
       default:
         break
     }
-    console.log(action)
   }
 }
 export default Home

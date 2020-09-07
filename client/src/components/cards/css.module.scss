@@ -1,0 +1,105 @@
+.card {
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 0.65rem;
+}
+
+.radio {
+    position: relative;
+    display: inline-block;
+    margin-bottom: .5rem;
+    .header {
+        color: #333;
+        font-size: 1.2rem;
+        line-height: 30px;
+        font-weight: 500;
+    }
+
+    .subHeader {
+        color: #9e9e9e;
+        font-size: 24px;
+    }
+
+    .body {
+        display: flex;
+        flex-direction: column;
+        width: 105px;
+        height: 105px;
+        margin: 10px;
+        justify-content: center;
+        justify-items: center;
+        color: var(--primary);
+        -webkit-box-shadow: none;
+        box-shadow: none;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        text-align: center;
+        -webkit-box-shadow: 0 4px 25px 0 rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 25px 0 rgba(0, 0, 0, 0.1);
+
+        &:hover {
+            cursor: pointer;
+        }
+
+        svg {
+            display: none;
+        }
+    }
+
+    input {
+        display: none !important;
+
+
+        &:checked+.card {
+            border: 2px solid #719eca;
+            -webkit-transition: border 0.3s;
+            -o-transition: border 0.3s;
+            transition: border 0.3s;
+
+            svg {
+                display: inline !important;
+                color: rgba(113, 158, 201, 0.6);
+                position: absolute;
+                right: 15px;
+                top: 15px;
+                font-style: normal;
+                font-size: 1rem;
+                font-weight: 900;
+                line-height: 1;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+                -webkit-animation-name: fadeInCheckbox;
+                animation-name: fadeInCheckbox;
+                -webkit-animation-duration: 0.3s;
+                animation-duration: 0.3s;
+                -webkit-animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            }
+        }
+    }
+}
+
+
+
+@-webkit-keyframes fadeInCheckbox {
+    from {
+        opacity: 0;
+        -webkit-transform: rotateZ(-20deg);
+    }
+
+    to {
+        opacity: 1;
+        -webkit-transform: rotateZ(0deg);
+    }
+}
+
+@keyframes fadeInCheckbox {
+    from {
+        opacity: 0;
+        transform: rotateZ(-20deg);
+    }
+
+    to {
+        opacity: 1;
+        transform: rotateZ(0deg);
+    }
+}

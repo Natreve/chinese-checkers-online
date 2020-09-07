@@ -1,5 +1,3 @@
-// jshint esversion: 8
-
 /**
  *
  * @author Andrew Gray <contact@andrewgray.dev>
@@ -10,18 +8,24 @@
  * @param {object} - The html canvas object
  * @param {number} - The number of players for the current game
  */
-import Piece from "./Piece.js"
+import Piece from "./Piece"
+import Player from "./Player"
 import blop from "./audio/Blop.wav"
 import click from "./audio/Click.wav"
-class Board {
-  constructor(canvas, nPlayers) {
-    if (!canvas || !nPlayers) return
-
+class Game {
+  constructor(canvas, options) {
+    if (!canvas || !options) return
     this.canvas = canvas
     this.ctx = canvas.getContext("2d")
     this.players = []
+    this.options = {
+      playerLimit: options.playerLimit || 6,
+      playerCount: 0,
+      isPublic: options.isPublic || false,
+      status: options.status || "started",
+    }
     this.config = {
-      nPlayers: nPlayers,
+      nPlayers: options.playerLimit || 6,
       space: 6, // This is used to determine the space between each node
       width: canvas.width,
       height: 0, // The height of the canvas is automatically generated based on the window size
@@ -53,10 +57,113 @@ class Board {
     this.config.height = this.config.radius * 2 * 17 + this.config.space * 16 //calculates the height of the canvas based on the about of circles that be be drawn on the y-axis
     this.canvas.height = this.config.height //sets the canvas height to the calculated height
     this.config.aspectRatio = this.config.width / this.config.height
-    // this.drawPlayerBases() //draw the game board player base triangle
+
     this.drawBoard() // draw the game board playable positions
-    this.initPlayers() //draws the player pieces on the board
     this.initGameEvents() // initialise game event listener(s)
+  }
+  add(player) {
+    if (this.isFull()) return false
+    if (Array.isArray(player)) {
+      this.players = [...this.players, ...player]
+      this.options.playerCount = this.players.length
+    } else {
+      this.players.push(player)
+      this.options.playerCount++
+    }
+
+    if (this.isFull()) this.options.status = "started"
+  }
+  isFull() {
+    if (this.options.playerLimit === this.options.playerCount) return true
+    else return false
+  }
+  start() {
+    if (!this.isFull()) return false
+    let turnOrder = [] // the turn order in terms of the index of each player position, example would be the player that goes third is at the third position on the board going clockwise
+    let nNodes = [] // Number of nodes on the x-axis where the position in the array represents a y-axis position that will be calculated.
+    //playerConfig is data for the player pieces location, color and homeZones in the game, this data is assigned to a player based on their turn order value
+    let playerConfig = [
+      { colorID: "red", homeZone: 4, color: "#F55145", x: 0, y: 0 },
+      { colorID: "yellow", homeZone: 5, color: "#FFEC41", x: 0, y: 4 },
+      { colorID: "blue", homeZone: 6, color: "#2597F3", x: 0, y: 9 },
+      { colorID: "green", homeZone: 1, color: "#45FF41", x: 0, y: 13 },
+      { colorID: "black", homeZone: 2, color: "#505457", x: 0, y: 9 },
+      { colorID: "white", homeZone: 3, color: "#F5F5F5", x: 0, y: 4 },
+    ]
+
+    if (this.options.playerLimit === 2) turnOrder = [1, 4]
+    else if (this.options.playerLimit === 3) turnOrder = [6, 2, 4]
+    else if (this.options.playerLimit === 4) turnOrder = [6, 2, 3, 5]
+    else if (this.options.playerLimit === 6) turnOrder = [1, 2, 3, 4, 5, 6]
+    else return false
+
+    turnOrder.forEach((pos, index) => {
+      const player = new Player(
+        this.players[index].uid,
+        this.players[index].username,
+        pos,
+        playerConfig[pos - 1]
+      )
+      this.players[index] = player
+      if (player.pos % 2 !== 0) nNodes = [1, 2, 3, 4]
+      else nNodes = [4, 3, 2, 1]
+
+      nNodes.forEach((nx, y) => {
+        if (player.pos === 1 || player.pos === 4) {
+          this.calcPlayerXYpos(nx, y + player.area.y, 1, (x, y) => {
+            const id = this.getNodeID(x, y)
+            this.state.playablePos[id].player = player
+            this.state.zones[player.pos - 1]++
+            this.state.playablePos[id].zone = player.pos
+            new Piece(
+              player.uid,
+              this.ctx,
+              this.state.playablePos[id].x,
+              this.state.playablePos[id].y,
+              this.config.radius,
+              player.color
+            )
+          })
+        } else if (player.pos === 5 || player.pos === 6) {
+          this.calcPlayerXYpos(nx, y + player.area.y, 0, (x, y) => {
+            let id = this.getNodeID(x, y)
+
+            this.state.playablePos[id].player = player
+            this.state.playablePos[id].player = player // add player piece to playable position
+            this.state.zones[player.pos - 1]++ // increment player zone value
+            this.state.playablePos[id].zone = player.pos //assign this area a zone #
+            new Piece(
+              player.uid,
+              this.ctx,
+              this.state.playablePos[id].x,
+              this.state.playablePos[id].y,
+              this.config.radius,
+              player.color
+            )
+          })
+        } else if (player.pos === 2 || player.pos === 3) {
+          this.calcPlayerXYpos(nx, y + player.area.y, 2, (x, y) => {
+            let id = this.getNodeID(x, y)
+
+            this.state.playablePos[id].player = player
+            this.state.playablePos[id].player = player // add player piece to playable position
+            this.state.zones[player.pos - 1]++ // increment player zone value
+            this.state.playablePos[id].zone = player.pos //assign this area a zone #
+            new Piece(
+              player.uid,
+              this.ctx,
+              this.state.playablePos[id].x,
+              this.state.playablePos[id].y,
+              this.config.radius,
+              player.color
+            )
+          })
+        }
+      })
+      if (index === 0) this.state.currentPlayerTurn = player
+
+      this.state.turnOrder.push(player)
+    })
   }
   /**
    * This function should be called when the canvas is resized in order to recalculate all the positions on the board
@@ -306,7 +413,6 @@ class Board {
         }
       })
     }
-    console.log(this.gameState.zones)
   }
 
   /**
@@ -654,4 +760,4 @@ class Board {
   }
 }
 
-export default Board
+export default Game
