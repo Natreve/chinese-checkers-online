@@ -19,4 +19,4 @@ This project started as a personal challenge to create a online turn base strate
 
 - Gatsby (React)
 - Node.js
-- Socket.io
+- Firebase

@@ -8,7 +8,7 @@ import Layout from "components/layout"
 const Home = () => {
   useEffect(() => {})
   return (
-    <Layout>
+    <Layout maxWidth="100%">
       <Carousel>
         <section className={css.slide}>
           <h1>Learn to play</h1>
@@ -33,7 +33,7 @@ const Home = () => {
             Create your own game to play with friends and family offiline or
             share your game link with friends and see who’s been practicing!{" "}
           </p>
-          <Button onClick={() => onClick("createGame")}>START A GAME</Button>
+          <Button onClick={() => onClick("createGame")}>CREATE GAME</Button>
         </section>
       </Carousel>
     </Layout>
@@ -53,7 +53,6 @@ const Home = () => {
       default:
         break
     }
-    console.log(action)
   }
 }
 export default Home

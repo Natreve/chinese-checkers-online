@@ -1,7 +1,6 @@
 @media only screen and (max-width: 390px) {
-    .slide {
+    .section {
         padding: 0 24px !important;
-
         h1 {
             font-size: 34px !important;
             line-height: 41px;
@@ -10,19 +9,18 @@
         p {
             font-size: 16px !important;
             line-height: 14px;
-            // width: 320px;
+            width: 320px;
         }
     }
 }
-
-.slide {
+.section {
     outline: none !important;
     margin: 0 auto;
     max-width: 612px;
     display: flex !important;
     flex-direction: column;
-    justify-content: left;
-    align-items: left;
+    justify-content: center;
+    align-items: center;
 
     h1 {
         font-family: Lato;
